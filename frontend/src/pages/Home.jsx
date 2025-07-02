@@ -60,7 +60,7 @@ const Home = () => {
                 <p className="text-sm text-gray-500">Stok: {product.stock}</p>
               </div>
 
-              <div className="flex justify-between items-center mt-4 text-sm">
+              <div className="flex gap-3 mt-4 text-sm">
                 <Link
                   to={`/edit/${product.id}`}
                   className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition"
