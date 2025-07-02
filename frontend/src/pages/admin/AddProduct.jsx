@@ -155,7 +155,7 @@ const AddProduct = () => {
               ))}
             </select>
             <Link
-              to="/kategori"
+              to="/admin/kategori"
               className="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap"
             >
               + Kategori Baru
