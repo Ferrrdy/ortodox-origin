@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description');
             $table->integer('price');
+            $table->foreignId('category_id')->nullable()->constrained()->onDelete('set null');
             $table->string('image')->nullable();
             $table->timestamps();
         });
@@ -25,7 +26,11 @@ return new class extends Migration
      * Reverse the migrations.
      */
     public function down(): void
-    {
+    {   
+        Schema::table('products', function (Blueprint $table) {
+            $table->foreignId('category_id')->nullable()->constrained()->onDelete('cascade');
+        });
         Schema::dropIfExists('products');
+  
     }
 };
