@@ -66,7 +66,7 @@ const Home = () => {
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
               <Link 
                 to="/shop" 
-                className="rounded-md bg-slate-900 px-5 py-3 text-lg font-semibold text-white shadow-sm hover:bg-slate-700 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+                className="rounded-md bg-slate-900 px-5 py-3 text-lg font-semibold text-white shadow-sm hover:bg-slate-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
               >
                 Belanja Sekarang
               </Link>
