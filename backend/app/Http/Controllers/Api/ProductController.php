@@ -56,7 +56,26 @@ public function store(Request $request)
      */
     public function update(Request $request, string $id)
     {
-        //
+        $product = Product::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric',
+            'stock' => 'nullable|integer',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        $product->update($validated);
+
+        return response()->json([
+            'message' => 'Produk berhasil diperbarui',
+            'data' => $product
+        ]);
     }
 
     /**
@@ -64,6 +83,11 @@ public function store(Request $request)
      */
     public function destroy(string $id)
     {
-        //
+        $product = Product::findOrFail($id);
+        $product->delete();
+
+        return response()->json([
+            'message' => 'Produk berhasil dihapus'
+        ]);
     }
 }
