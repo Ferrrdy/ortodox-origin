@@ -29,6 +29,14 @@ const Home = () => {
             <p className="text-green-600 font-bold mt-2">
               Rp {Number(product.price).toLocaleString('id-ID')}
             </p>
+            <p className="text-gray-600 text-sm">Stok: {product.stock}</p>
+            {product.image && (
+              <img
+                src={`http://127.0.0.1:8000/storage/${product.image}`}
+                alt={product.name}
+                className="mt-2 rounded-md"
+              />
+            )}
           </div>
         ))}
       </div>
