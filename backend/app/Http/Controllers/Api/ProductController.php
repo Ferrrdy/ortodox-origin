@@ -28,7 +28,8 @@ public function store(Request $request)
         'price' => 'required|numeric',
         'stock' => 'nullable|integer',
         'category_id' => 'required|exists:categories,id',
-        'image' => 'nullable|string',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // ✅
+
     ]);
 
     $product = Product::create($validated);

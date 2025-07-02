@@ -6,12 +6,12 @@ use Illuminate\Http\Request;
 
 class IsAdmin
 {
-    public function handle(Request $request, Closure $next)
+    public function handle($request, Closure $next)
     {
-        if ($request->user()->role !== 'admin') {
-            return response()->json(['message' => 'Hanya admin yang diizinkan!'], 403);
+        if ($request->user() && $request->user()->role === 'admin') {
+            return $next($request);
         }
 
-        return $next($request);
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
 }

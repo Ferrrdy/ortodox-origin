@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/axiosConfig'; // Menggunakan instance Axios terpusat
 import { useNavigate, Link } from 'react-router-dom';
 
+
 const AddProduct = () => {
   const [form, setForm] = useState({
     name: '',
@@ -88,13 +89,15 @@ const AddProduct = () => {
 
     } catch (error) {
       if (error.response && error.response.status === 422) {
+        console.log('❌ VALIDATION ERROR:', error.response.data); // tambahkan ini!
         setErrors(error.response.data.errors);
         setMessage('❌ Gagal menambahkan produk. Periksa kembali data Anda.');
       } else {
+        console.log('❌ SERVER ERROR:', error); // untuk error lainnya
         setMessage('❌ Gagal menambahkan produk. Terjadi kesalahan pada server.');
-        console.error(error);
       }
     }
+
   };
 
   // --- BAGIAN TAMPILAN (JSX) TIDAK DIUBAH SAMA SEKALI ---

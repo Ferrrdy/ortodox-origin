@@ -20,29 +20,28 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage('');
-    setErrors({});
+  e.preventDefault();
+  setMessage('');
+  setErrors({});
 
-    try {
-      // Menggunakan apiClient, base URL sudah diatur
-      const response = await apiClient.post('/login', formData);
-      console.log('TOKEN YANG AKAN DISIMPAN:', response.data.access_token);
-      setMessage('✅ Login berhasil! Anda akan diarahkan ke halaman utama.');
-      console.log('Login successful:', response.data);
+  try {
+    const response = await apiClient.post('/login', formData);
+    const token = response.data.token;
+    const user = response.data.user;
 
-      // Setelah login, simpan token dan data user ke AuthContext
-      login(response.data.user); // Ini akan mengupdate state user & menyimpan ke 'currentUser'
-      localStorage.setItem('token', response.data.access_token); // Simpan token di localStorage
+    console.log('TOKEN YANG AKAN DISIMPAN:', token);
+    console.log("FULL LOGIN RESPONSE:", response.data);
 
-      // Redirect ke halaman utama setelah beberapa saat
-      setTimeout(() => {
-        if (response.data.user.role === 'admin') {
-          navigate('/'); // Arahkan admin ke dashboard utama
-        } else {
-          navigate('/'); // Arahkan user biasa ke halaman utama
-        }
-      }, 1500);
+    // ✅ Simpan token ke localStorage sebelum login()
+    localStorage.setItem('token', token);
+
+    // ✅ Set user ke context
+    login(user);
+
+    setMessage('✅ Login berhasil! Anda akan diarahkan ke halaman utama.');
+    setTimeout(() => {
+      navigate('/');
+    }, 1500);
 
     } catch (error) {
       if (error.response) {
