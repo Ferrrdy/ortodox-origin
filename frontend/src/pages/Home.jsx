@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
+import { FaEdit, FaTrash } from 'react-icons/fa'
 
 const Home = () => {
   const [products, setProducts] = useState([])
@@ -14,44 +15,66 @@ const Home = () => {
         console.error('Gagal ambil produk:', err)
       })
   }, [])
-const handleDelete = async (id) => {
-  if (!confirm('Yakin ingin menghapus produk ini?')) return;
 
-  try {
-    await axios.delete(`http://127.0.0.1:8000/api/products/${id}`);
-    setProducts(products.filter(p => p.id !== id));
-  } catch (err) {
-    console.error('Gagal hapus produk:', err);
+  const handleDelete = async (id) => {
+    if (!confirm('Yakin ingin menghapus produk ini?')) return;
+
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/products/${id}`)
+      setProducts(products.filter(p => p.id !== id))
+    } catch (err) {
+      console.error('Gagal hapus produk:', err)
+    }
   }
-};
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold mb-6 text-center text-blue-700">Daftar Baju</h1>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-8">
+      <h1 className="text-4xl font-bold text-center text-blue-800 mb-10 tracking-wide drop-shadow-sm">
+        Koleksi Baju Kami
+      </h1>
 
-      <div className="flex flex-wrap gap-6 justify-center">
+      <div className="flex flex-wrap justify-center gap-8">
         {products.map(product => (
           <div
             key={product.id}
-            className="bg-white border border-gray-200 rounded-lg shadow-md p-4 w-64"
+            className="bg-white rounded-2xl shadow-lg overflow-hidden w-72 hover:shadow-xl transition duration-300"
           >
-            <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
-            <p className="text-gray-600 text-sm">{product.description}</p>
-            <p className="text-green-600 font-bold mt-2">
-              Rp {Number(product.price).toLocaleString('id-ID')}
-            </p>
-            <p className="text-gray-600 text-sm">Stok: {product.stock}</p>
             {product.image && (
               <img
                 src={`http://127.0.0.1:8000/storage/${product.image}`}
                 alt={product.name}
-                className="mt-2 rounded-md"
+                className="h-48 w-full object-cover"
               />
             )}
-            <Link to={`/edit/${product.id}`} className="text-blue-600 hover:underline text-sm">Edit</Link>
-            <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:underline text-sm">
-              Hapus
-            </button>
+
+            <div className="p-5 flex flex-col justify-between h-[220px]">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-800 truncate">{product.name}</h3>
+                <p className="text-gray-500 text-sm line-clamp-2">{product.description}</p>
+              </div>
+
+              <div className="mt-3">
+                <p className="text-green-600 font-bold text-lg">
+                  Rp {Number(product.price).toLocaleString('id-ID')}
+                </p>
+                <p className="text-sm text-gray-500">Stok: {product.stock}</p>
+              </div>
+
+              <div className="flex justify-between items-center mt-4 text-sm">
+                <Link
+                  to={`/edit/${product.id}`}
+                  className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition"
+                >
+                  <FaEdit className="text-xs" /> Edit
+                </Link>
+                <button
+                  onClick={() => handleDelete(product.id)}
+                  className="flex items-center gap-1 text-red-600 hover:text-red-800 transition"
+                >
+                  <FaTrash className="text-xs" /> Hapus
+                </button>
+              </div>
+            </div>
           </div>
         ))}
       </div>
