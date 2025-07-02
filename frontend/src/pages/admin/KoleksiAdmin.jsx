@@ -32,6 +32,9 @@ const Koleksi = () => {
             <h1 className="text-3xl font-bold text-slate-900">Koleksi Produk</h1>
             <p className="text-base text-slate-500 mt-1">Kelola semua produk yang ada di toko Anda.</p>
           </div>
+          <Link to="/admin/tambah" className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2">
+            <FaPlus /> Tambah Produk
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
@@ -56,6 +59,21 @@ const Koleksi = () => {
                     Rp {Number(product.price).toLocaleString('id-ID')}
                   </p>
                   <p className="text-sm text-gray-500">Stok: {product.stock}</p>
+                </div>
+
+                <div className="flex gap-4 mt-4 text-sm">
+                  <Link
+                    to={`/admin/edit/${product.id}`}
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition"
+                  >
+                    <FaEdit className="text-xs" /> Edit
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(product.id)}
+                    className="flex items-center gap-1 text-red-600 hover:text-red-800 transition"
+                  >
+                    <FaTrash className="text-xs" /> Hapus
+                  </button>
                 </div>
               </div>
             </div>
