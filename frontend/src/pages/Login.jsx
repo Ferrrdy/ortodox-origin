@@ -32,13 +32,14 @@ const Login = () => {
       // Setelah login, simpan token dan data user ke AuthContext
       login(response.data.user); // Ini akan mengupdate state user di context
       localStorage.setItem('token', response.data.access_token); // Simpan token di localStorage
+      localStorage.setItem('user', JSON.stringify(response.data.user));
 
       // Redirect ke halaman utama setelah beberapa saat
       setTimeout(() => {
         if (response.data.user.role === 'admin') {
-            navigate('/admin/aKoleksi');
+            navigate('/');
         } else {
-            navigate('/Koleksi');
+            navigate('/');
         }
         }, 1500);
 

@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    // Ambil data user dari localStorage saat pertama kali app dijalankan
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       try {
@@ -19,10 +20,10 @@ export const AuthProvider = ({ children }) => {
       } catch (e) {
         console.error("Gagal parsing user dari localStorage:", e);
         localStorage.removeItem('currentUser');
-        setUser(null);
+        setUser({ role: 'guest' });
       }
     } else {
-        setUser({ role: 'guest' });
+      setUser({ role: 'guest' }); // default role
     }
   }, []);
 
@@ -35,12 +36,13 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser({ role: 'guest' });
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('token'); // tambahkan ini juga kalau kamu simpan token
     console.log('User logged out');
   };
 
   const value = {
     user,
-    userRole: user ? user.role : 'guest',
+    userRole: user?.role || 'guest',
     isAuthenticated: !!user && user.role !== 'guest',
     login,
     logout,
