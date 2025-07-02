@@ -10,123 +10,121 @@ const AddProduct = () => {
     image: null,
   });
 
+  const [preview, setPreview] = useState(null);
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  // Menangani perubahan input
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    setForm({
-      ...form,
-      [name]: files ? files[0] : value,
-    });
+
+    if (name === 'image' && files.length > 0) {
+      setForm({ ...form, image: files[0] });
+      setPreview(URL.createObjectURL(files[0])); // untuk preview
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
-  // Submit form ke backend
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setMessage('');
+    setErrors({});
 
     const formData = new FormData();
-    for (let key in form) {
-      formData.append(key, form[key]);
+    formData.append('name', form.name);
+    formData.append('description', form.description);
+    formData.append('price', form.price);
+    formData.append('stock', form.stock);
+    if (form.image) {
+      formData.append('image', form.image);
     }
 
     try {
       await axios.post('http://127.0.0.1:8000/api/products', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setMessage('✅ Produk berhasil ditambahkan');
-      setForm({
-        name: '',
-        description: '',
-        price: '',
-        stock: '',
-        image: null,
-      });
+
+      setMessage('✅ Produk berhasil ditambahkan!');
+      setForm({ name: '', description: '', price: '', stock: '', image: null });
+      setPreview(null);
     } catch (error) {
-      console.error(error);
+      setErrors(error.response?.data?.errors || {});
       setMessage('❌ Gagal menambahkan produk');
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded shadow mt-10">
+    <div className="max-w-xl mx-auto p-6 bg-white shadow rounded-lg mt-8">
       <h2 className="text-2xl font-bold mb-4">Tambah Produk</h2>
-
-      {message && (
-        <div className="mb-4 text-sm font-medium text-center text-blue-700">{message}</div>
-      )}
+      {message && <p className="mb-4 text-sm text-center">{message}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Nama Produk</label>
+          <label className="block font-medium">Nama Produk</label>
           <input
             type="text"
             name="name"
             value={form.name}
             onChange={handleChange}
-            required
-            className="w-full mt-1 p-2 border rounded"
+            className="w-full border p-2 rounded"
           />
+          {errors.name && <p className="text-red-600 text-sm">{errors.name[0]}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+          <label className="block font-medium">Deskripsi</label>
           <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
-            rows="3"
-            className="w-full mt-1 p-2 border rounded"
-          ></textarea>
+            className="w-full border p-2 rounded"
+          />
+          {errors.description && <p className="text-red-600 text-sm">{errors.description[0]}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Harga</label>
+          <label className="block font-medium">Harga</label>
           <input
             type="number"
             name="price"
             value={form.price}
             onChange={handleChange}
-            required
-            className="w-full mt-1 p-2 border rounded"
+            className="w-full border p-2 rounded"
           />
+          {errors.price && <p className="text-red-600 text-sm">{errors.price[0]}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Stok</label>
+          <label className="block font-medium">Stok</label>
           <input
             type="number"
             name="stock"
             value={form.stock}
             onChange={handleChange}
-            className="w-full mt-1 p-2 border rounded"
+            className="w-full border p-2 rounded"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Gambar Produk</label>
+          <label className="block font-medium">Gambar Produk</label>
           <input
             type="file"
             name="image"
-            onChange={handleChange}
             accept="image/*"
-            className="w-full mt-1"
+            onChange={handleChange}
+            className="w-full"
           />
+          {errors.image && <p className="text-red-600 text-sm">{errors.image[0]}</p>}
+          {preview && (
+            <img src={preview} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded" />
+          )}
         </div>
 
         <button
           type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
         >
-          {loading ? 'Mengirim...' : 'Simpan Produk'}
+          Simpan Produk
         </button>
       </form>
     </div>

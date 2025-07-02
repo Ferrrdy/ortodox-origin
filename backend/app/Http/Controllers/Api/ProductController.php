@@ -30,8 +30,7 @@ public function store(Request $request)
     ]);
 
     if ($request->hasFile('image')) {
-        $path = $request->file('image')->store('products', 'public');
-        $validated['image'] = $path;
+        $validated['image'] = $request->file('image')->store('products', 'public');
     }
 
     $product = Product::create($validated);
@@ -41,6 +40,7 @@ public function store(Request $request)
         'data' => $product
     ], 201);
 }
+
 
 
     /**
