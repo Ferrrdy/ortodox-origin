@@ -121,10 +121,10 @@ const Home = () => {
           {secondaryCards.map((card) => (
             <div key={card.title} className="relative flex items-center justify-between gap-x-8 rounded-2xl bg-slate-100 p-8">
               <div className="flex-shrink-0">
-                <h3 className="text-xl font-bold text-gray-900">{card.title}</h3>
+                <h3 className="text-3xl font-bold text-gray-900">{card.title}</h3>
                 <p className="mt-1 text-base text-gray-600">{card.description}</p>
                 <Link to="/shop" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-800 group">
-                  <span>Explore Now</span>
+                  <span className='text-lg'>Explore Now</span>
                   <FaArrowRight className="transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
