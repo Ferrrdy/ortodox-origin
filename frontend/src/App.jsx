@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import AddProduct from './pages/AddProduct';
 import EditProduct from './pages/EditProduct';
+import Koleksi from './pages/Koleksi';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/tambah" element={<AddProduct />} />
         <Route path="/edit/:id" element={<EditProduct />} />
+        <Route path="/koleksi" element={<Koleksi />} />"
         <Route path="*" element={<h2 className="text-center text-red-500">Halaman tidak ditemukan</h2>} />
       </Routes>
     </div>
