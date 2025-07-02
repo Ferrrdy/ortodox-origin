@@ -19,10 +19,29 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        //
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'price' => 'required|numeric',
+        'stock' => 'nullable|integer',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
+
+    if ($request->hasFile('image')) {
+        $path = $request->file('image')->store('products', 'public');
+        $validated['image'] = $path;
     }
+
+    $product = Product::create($validated);
+
+    return response()->json([
+        'message' => 'Produk berhasil ditambahkan',
+        'data' => $product
+    ], 201);
+}
+
 
     /**
      * Display the specified resource.

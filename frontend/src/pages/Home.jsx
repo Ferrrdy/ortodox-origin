@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 
 const Home = () => {
@@ -15,14 +15,20 @@ const Home = () => {
   }, [])
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Daftar Baju</h1>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-2xl font-bold mb-6 text-center text-blue-700">Daftar Baju</h1>
+
+      <div className="flex flex-wrap gap-6 justify-center">
         {products.map(product => (
-          <div key={product.id} style={{ border: '1px solid #ddd', padding: '1rem', width: '200px' }}>
-            <h3>{product.name}</h3>
-            <p>Rp {product.price}</p>
-            <p style={{ fontSize: '0.8rem' }}>{product.description}</p>
+          <div
+            key={product.id}
+            className="bg-white border border-gray-200 rounded-lg shadow-md p-4 w-64"
+          >
+            <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
+            <p className="text-gray-600 text-sm">{product.description}</p>
+            <p className="text-green-600 font-bold mt-2">
+              Rp {Number(product.price).toLocaleString('id-ID')}
+            </p>
           </div>
         ))}
       </div>
