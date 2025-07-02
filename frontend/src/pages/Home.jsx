@@ -65,16 +65,10 @@ const Home = () => {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
               <Link 
-                to="/shop" 
+                to="/koleksi" 
                 className="rounded-md bg-slate-900 px-5 py-3 text-lg font-semibold text-white shadow-sm hover:bg-slate-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
               >
                 Belanja Sekarang
-              </Link>
-              <Link 
-                to="/koleksi" 
-                className="text-lg font-semibold leading-6 text-slate-800 group"
-              >
-                Lihat Koleksi <span className="inline-block transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
               </Link>
             </div>
           </div>
@@ -103,16 +97,12 @@ const Home = () => {
               <p className="mt-2 text-base text-slate-300">
                 Dari atasan hingga bawahan, temukan potongan klasik yang wajib ada di lemari Anda.
               </p>
-              <Link to="/shop" className="mt-8 inline-flex items-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-200">
-                <span>Lihat Semua</span>
-                <FaArrowRight />
-              </Link>
             </div>
             <div className="relative mt-16 h-80">
               <img
                 src="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=2070&auto=format&fit=crop"
                 alt="Koleksi Pakaian"
-                className="absolute bottom-0 right-0 h-[22rem] w-auto"
+                className="rounded-2xl absolute bottom-0 right-0 h-[22rem] w-auto"
               />
             </div>
           </div>
@@ -123,10 +113,6 @@ const Home = () => {
               <div className="flex-shrink-0">
                 <h3 className="text-3xl font-bold text-gray-900">{card.title}</h3>
                 <p className="mt-1 text-base text-gray-600">{card.description}</p>
-                <Link to="/shop" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-800 group">
-                  <span className='text-lg'>Explore Now</span>
-                  <FaArrowRight className="transition-transform group-hover:translate-x-1" />
-                </Link>
               </div>
             </div>
           ))}

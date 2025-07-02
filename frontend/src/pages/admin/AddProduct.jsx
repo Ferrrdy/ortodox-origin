@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom'; // Tambahkan Link
+import apiClient from '../../api/axiosConfig'; // Menggunakan instance Axios terpusat
+import { useNavigate, Link } from 'react-router-dom';
 
 const AddProduct = () => {
   const [form, setForm] = useState({
@@ -8,40 +8,35 @@ const AddProduct = () => {
     description: '',
     price: '',
     stock: '',
-    category_id: '', // State untuk ID kategori yang dipilih
+    category_id: '',
     image: null,
   });
 
-  const [categories, setCategories] = useState([]); // State untuk daftar kategori
+  const [categories, setCategories] = useState([]);
   const [preview, setPreview] = useState(null);
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState({});
-
   const navigate = useNavigate();
-
-  // Fungsi untuk mengambil data kategori
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get('http://127.0.0.1:8000/api/categories');
-      console.log('API Categories Response:', response.data); // Log respons untuk debugging
-
-      // Asumsi respons API kategori adalah array langsung atau { data: [...] }
-      if (Array.isArray(response.data)) {
-        setCategories(response.data);
-      } else if (response.data && Array.isArray(response.data.data)) {
-        setCategories(response.data.data);
-      } else {
-        console.error("Format data kategori tidak sesuai harapan:", response.data);
-        setCategories([]); // Pastikan state kategori kosong jika format tidak sesuai
-      }
-    } catch (error) {
-      console.error('Gagal mengambil kategori:', error);
-      setMessage('❌ Gagal memuat daftar kategori.');
-    }
-  };
 
   // useEffect untuk mengambil kategori saat komponen dimuat
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        // Menggunakan apiClient, otentikasi & base URL sudah diatur terpusat
+        const response = await apiClient.get('/categories');
+        
+        if (response.data && Array.isArray(response.data.data)) {
+          setCategories(response.data.data);
+        } else {
+          console.error("Format data kategori tidak sesuai harapan:", response.data);
+          setCategories([]);
+        }
+      } catch (error) {
+        console.error('Gagal mengambil kategori:', error);
+        setMessage('❌ Gagal memuat daftar kategori.');
+      }
+    };
+    
     fetchCategories();
   }, []);
 
@@ -67,18 +62,18 @@ const AddProduct = () => {
     formData.append('description', form.description);
     formData.append('price', form.price);
     formData.append('stock', form.stock);
-    formData.append('category_id', form.category_id); // Pastikan category_id disertakan
+    formData.append('category_id', form.category_id);
     if (form.image) {
       formData.append('image', form.image);
     }
 
     try {
-      await axios.post('http://127.0.0.1:8000/api/products', formData, {
+      // Menggunakan apiClient, otentikasi & base URL sudah diatur terpusat
+      await apiClient.post('/products', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       setMessage('✅ Produk berhasil ditambahkan!');
-      // Reset form setelah berhasil
       setForm({
         name: '',
         description: '',
@@ -88,8 +83,7 @@ const AddProduct = () => {
         image: null,
       });
       setPreview(null);
-      setErrors({}); // Hapus error yang mungkin ada
-      // Navigasi setelah beberapa detik atau langsung
+      setErrors({});
       setTimeout(() => navigate('/koleksi'), 1500);
 
     } catch (error) {
@@ -103,6 +97,7 @@ const AddProduct = () => {
     }
   };
 
+  // --- BAGIAN TAMPILAN (JSX) TIDAK DIUBAH SAMA SEKALI ---
   return (
     <div className="max-w-xl mx-auto p-8 bg-white shadow-lg rounded-2xl my-10">
       <h2 className="text-3xl font-bold mb-6 text-center text-slate-800">Tambah Produk Baru</h2>
@@ -139,7 +134,6 @@ const AddProduct = () => {
           {errors.stock && <p className="text-red-600 text-xs mt-1">{errors.stock[0]}</p>}
         </div>
 
-        {/* BAGIAN DROPDOWN KATEGORI */}
         <div>
           <label htmlFor="category_id" className="block font-medium text-gray-700 mb-1">Kategori</label>
           <div className="flex gap-2 items-center">
@@ -157,9 +151,8 @@ const AddProduct = () => {
                 </option>
               ))}
             </select>
-            {/* Link untuk menambah kategori baru */}
             <Link
-              to="/admin/kategori" // Sesuaikan dengan route untuk menambahkan kategori
+              to="/kategori"
               className="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap"
             >
               + Kategori Baru
@@ -167,7 +160,6 @@ const AddProduct = () => {
           </div>
           {errors.category_id && <p className="text-red-600 text-xs mt-1">{errors.category_id[0]}</p>}
         </div>
-        {/* AKHIR BAGIAN DROPDOWN KATEGORI */}
 
         <div>
           <label className="block font-medium text-gray-700">Gambar Produk</label>

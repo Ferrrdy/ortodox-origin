@@ -1,7 +1,16 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaShoppingCart } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <nav className="flex justify-between items-center mb-6 relative px-4">
       {/* Kiri: Logo */}
@@ -15,13 +24,24 @@ const Navbar = () => {
         <Link to="/" className="text-lg font-medium text-gray-700 hover:text-blue-600">Contact</Link>
       </div>
 
-      {/* Kanan: Icon Cart */}
-      <div className="flex items-col gap-4 text-slate-700">
-        <Link to="/login" className=' hover:text-blue-600 cursor-pointer'>Sign In</Link>
-        <Link to="/register" className=' hover:text-blue-600 cursor-pointer'>Sign Up</Link>
-        <Link to="/cart" className=' hover:text-blue-600 cursor-pointer'>
-          <FaShoppingCart size={24} />
-        </Link>
+      {/* Kanan: Auth + Cart */}
+      <div className="flex items-center gap-4 text-slate-700">
+        {isAuthenticated ? (
+          <>
+            <span className="text-sm font-medium text-gray-700">{user?.name}</span>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 text-white px-3 py-1 rounded-3xl hover:bg-red-600 transition"
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="hover:text-blue-600 cursor-pointer">Sign In</Link>
+            <Link to="/register" className="hover:text-blue-600 cursor-pointer">Sign Up</Link>
+          </>
+        )}
       </div>
     </nav>
   );

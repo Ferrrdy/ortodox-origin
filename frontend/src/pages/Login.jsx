@@ -1,9 +1,9 @@
 // src/pages/Login.jsx
 
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // Sesuaikan path
+import apiClient from "../api/axiosConfig";
+import { useAuth } from "../contexts/AuthContext";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -25,23 +25,24 @@ const Login = () => {
     setErrors({});
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/login', formData);
+      // Menggunakan apiClient, base URL sudah diatur
+      const response = await apiClient.post('/login', formData);
+      console.log('TOKEN YANG AKAN DISIMPAN:', response.data.access_token);
       setMessage('✅ Login berhasil! Anda akan diarahkan ke halaman utama.');
       console.log('Login successful:', response.data);
 
       // Setelah login, simpan token dan data user ke AuthContext
-      login(response.data.user); // Ini akan mengupdate state user di context
+      login(response.data.user); // Ini akan mengupdate state user & menyimpan ke 'currentUser'
       localStorage.setItem('token', response.data.access_token); // Simpan token di localStorage
-      localStorage.setItem('user', JSON.stringify(response.data.user));
 
       // Redirect ke halaman utama setelah beberapa saat
       setTimeout(() => {
         if (response.data.user.role === 'admin') {
-            navigate('/');
+          navigate('/'); // Arahkan admin ke dashboard utama
         } else {
-            navigate('/');
+          navigate('/'); // Arahkan user biasa ke halaman utama
         }
-        }, 1500);
+      }, 1500);
 
     } catch (error) {
       if (error.response) {
@@ -60,12 +61,13 @@ const Login = () => {
     }
   };
 
+  // --- Bagian Tampilan (JSX) tidak berubah ---
   return (
     <div className="max-w-md mx-auto p-8 bg-white shadow-lg rounded-2xl my-10">
       <h2 className="text-3xl font-bold mb-6 text-center text-slate-800">Login</h2>
       {message && (
         <p className={`mb-4 text-sm text-center p-3 rounded-lg ${
-          errors && Object.keys(errors).length > 0 || message.includes('❌') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          (errors && Object.keys(errors).length > 0) || message.includes('❌') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
         }`}>
           {message}
         </p>
