@@ -28,10 +28,20 @@ public function store(Request $request)
         'price' => 'required|numeric',
         'stock' => 'nullable|integer',
         'category_id' => 'required|exists:categories,id',
-        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // ✅
-
+        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
     ]);
 
+    // 💡 LOGIKA YANG PERLU DITAMBAHKAN
+    // Cek apakah ada file gambar yang di-upload
+    if ($request->hasFile('image')) {
+        // Simpan gambar secara permanen dan dapatkan path-nya
+        $path = $request->file('image')->store('products', 'public');
+        
+        // Ganti isi 'image' di dalam array $validated dengan path yang baru
+        $validated['image'] = $path;
+    }
+
+    // Buat produk dengan data yang sudah divalidasi (dan path gambar yang sudah benar)
     $product = Product::create($validated);
 
     return response()->json([
