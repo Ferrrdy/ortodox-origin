@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CartController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,3 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/products',        [ProductController::class, 'index']);
 Route::get('/products/{id}',   [ProductController::class, 'show']);
 Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']); // ini untuk update
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+    Route::patch('/cart/{id}/decrement', [CartController::class, 'decrement']);
+    Route::patch('/cart/{id}/increment', [CartController::class, 'increment']);
+});
