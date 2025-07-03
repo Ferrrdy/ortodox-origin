@@ -6,7 +6,9 @@ import AddCategory from './pages/admin/AddCategory';
 import EditProduct from './pages/admin/EditProduct';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Koleksi from './pages/Koleksi';
+import Koleksi from './pages/user/Koleksi';
+import Cart from './pages/user/Cart';
+import Profil from './pages/user/Profil';
 import KoleksiAdmin from './pages/admin/KoleksiAdmin';
 import { useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -25,13 +27,15 @@ const App = () => {
         {/* Rute Umum */}
         <Route path="/" element={<Home />} />
         <Route
-          path="/koleksi"
+          path="/user/koleksi"
           element={
             userRole === 'admin'
               ? <Navigate to="/admin/aKoleksi" replace />
               : <Koleksi />
           }
         />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/profil" element={<Profil />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 

@@ -48,17 +48,17 @@ const Koleksi = () => {
                 />
               )}
 
-              <div className="p-4 flex flex-col justify-between h-[220px]">
+              <div className="p-4 flex flex-col justify-between h-[260px]">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-800 truncate">{product.name}</h3>
-                  <p className="text-gray-500 text-sm line-clamp-2">{product.description}</p>
+                  <h3 className="text-2xl font-bold text-gray-800 truncate">{product.name}</h3>
+                  <p className="text-gray-500 text-base line-clamp-2">{product.description}</p>
                 </div>
 
                 <div className="mt-2">
-                  <p className="text-green-600 font-bold text-base">
+                  <p className="text-green-600 font-bold text-xl">
                     Rp {Number(product.price).toLocaleString('id-ID')}
                   </p>
-                  <p className="text-sm text-gray-500">Stok: {product.stock}</p>
+                  <p className="text-base text-gray-500">Stok: {product.stock}</p>
                 </div>
 
                 <div className="flex gap-4 mt-4 text-sm">
