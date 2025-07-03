@@ -87,7 +87,7 @@ const CartPage = () => {
       await fetchCartCount();
 
       alert('Checkout berhasil!');
-      navigate(`/order/${response.data.order.id}`);
+      navigate(`/order-success/${response.data.order.id}`);
 
     } catch (error) {
       // Log error yang lebih detail untuk debugging
