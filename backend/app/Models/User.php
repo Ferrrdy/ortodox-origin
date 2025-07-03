@@ -8,6 +8,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+// ✨ Impor model Cart ✨
+use App\Models\Cart;
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -43,4 +46,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * ✨ FUNGSI RELASI BARU YANG DITAMBAHKAN ✨
+     * Mendefinisikan bahwa seorang User bisa memiliki banyak item di Cart.
+     */
+    public function carts()
+    {
+        return $this->hasMany(Cart::class);
+    }
 }

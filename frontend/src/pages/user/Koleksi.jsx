@@ -62,7 +62,7 @@ const Koleksi = () => {
       });
 
       await fetchCartCount();
-      window.location.href = '/keranjang';
+      window.location.href = '/order';
     } catch (err) {
       console.error('Gagal saat beli sekarang:', err);
       alert('Gagal memproses pembelian.');

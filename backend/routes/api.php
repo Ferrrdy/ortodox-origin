@@ -63,8 +63,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
     Route::patch('/cart/{id}/decrement', [CartController::class, 'decrement']);
     Route::patch('/cart/{id}/increment', [CartController::class, 'increment']);
-    Route::delete('/cart/clear', [CartController::class, 'clear']);
-    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+    Route::post('/cart/clear-all', [CartController::class, 'clear']);
+    Route::delete('/cart/item/{id}', [CartController::class, 'destroy']); 
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
