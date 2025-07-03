@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Koleksi from './pages/user/Koleksi';
 import Cart from './pages/user/Cart';
 import Profil from './pages/user/Profil';
+import OrderSuccessPage from './pages/user/OrderSuccessPage';
 import KoleksiAdmin from './pages/admin/KoleksiAdmin';
 import { useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -35,6 +36,7 @@ const App = () => {
           }
         />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/order" element={<OrderSuccessPage />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

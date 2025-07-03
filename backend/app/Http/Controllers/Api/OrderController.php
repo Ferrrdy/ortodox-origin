@@ -73,4 +73,14 @@ class OrderController extends Controller
             'order' => $order->load('items.product')
         ], 201);
     }
+    
+    public function show(Order $order)
+    {
+        // Pastikan hanya pemilik order yang bisa melihat
+        if (auth()->user()->id !== $order->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return $order->load('items.product');
+    }
 }

@@ -85,7 +85,7 @@ const AddProduct = () => {
       });
       setPreview(null);
       setErrors({});
-      setTimeout(() => navigate('/koleksi'), 1500);
+      setTimeout(() => navigate('/admin/aKoleksi'), 1500);
 
     } catch (error) {
       if (error.response && error.response.status === 422) {

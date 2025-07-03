@@ -63,9 +63,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
     Route::patch('/cart/{id}/decrement', [CartController::class, 'decrement']);
     Route::patch('/cart/{id}/increment', [CartController::class, 'increment']);
+    Route::delete('/cart/clear', [CartController::class, 'clear']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/checkout', [OrderController::class, 'checkout']);
     Route::get('/orders', [OrderController::class, 'index']); // optional
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
 });

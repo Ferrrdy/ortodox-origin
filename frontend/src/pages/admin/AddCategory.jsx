@@ -23,7 +23,7 @@ const AddCategory = () => {
       setErrors({}); // Bersihkan error
 
       // Opsional: Kembali ke halaman tambah produk atau daftar kategori setelah beberapa detik
-      setTimeout(() => navigate('/tambah'), 1500); // Kembali ke form AddProduct
+      setTimeout(() => navigate('/admin/tambah'), 1500); // Kembali ke form AddProduct
 
     } catch (error) {
       if (error.response && error.response.status === 422) {
