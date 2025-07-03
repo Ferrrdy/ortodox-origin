@@ -6,6 +6,12 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\OrderItemController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Middleware\IsAdmin;
+
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -41,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/products', [ProductController::class, 'store']);
         Route::put('/products/{id}', [ProductController::class, 'update']);
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+        Route::post('/categories', [CategoryController::class, 'store']);
     });
 });
 
@@ -56,4 +63,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
     Route::patch('/cart/{id}/decrement', [CartController::class, 'decrement']);
     Route::patch('/cart/{id}/increment', [CartController::class, 'increment']);
+});
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/checkout', [OrderController::class, 'checkout']);
+    Route::get('/orders', [OrderController::class, 'index']); // optional
 });
