@@ -107,14 +107,16 @@ public function increment($id)
         return response()->json(['message' => 'Produk dihapus dari keranjang']);
     }
 
-     public function clear(Request $request)
-    {
-        // Kode ini aman, ia hanya akan menghapus item milik pengguna yang login.
-        // Jika tidak ada item, tidak akan terjadi error.
-        $request->user()->carts()->delete();
+// CartController.php
+public function clearAll()
+{
+    $user = auth()->user();
 
-        return response()->json([
-            'message' => 'Keranjang berhasil dibersihkan.'
-        ], 200);
-    }
+    // Menghapus semua item di keranjang user
+    \App\Models\Cart::where('user_id', $user->id)->delete();
+
+    return response()->json(['message' => 'Keranjang berhasil dikosongkan']);
+}
+
+    
 }

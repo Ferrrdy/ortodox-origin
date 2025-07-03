@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\OrderItem;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -20,21 +21,15 @@ class OrderController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $order = Order::create([
-            'user_id' => $user->id,
-            'status' => 'pending',
-            'total_price' => 0, // Akan dihitung di bawah
-        ]);
-
         $total = 0;
+        $itemsData = [];
 
         foreach ($validated['items'] as $item) {
             $product = Product::find($item['product_id']);
 
-            // Validasi harga produk
             if (!$product || !$product->exists) {
                 return response()->json([
-                    'message' => "Produk dengan ID {$item['product_id']} tidak ditemukan."
+                    'message' => "Produk dengan ID {$item['product_id']} tidak ditemukan.",
                 ], 404);
             }
 
@@ -44,7 +39,6 @@ class OrderController extends Controller
                 ], 422);
             }
 
-            // Cek stok cukup
             if ($product->stock < $item['quantity']) {
                 return response()->json([
                     'message' => "Stok produk '{$product->name}' tidak cukup.",
@@ -54,33 +48,30 @@ class OrderController extends Controller
             $subtotal = $product->price * $item['quantity'];
             $total += $subtotal;
 
-            // Simpan item ke order
-            $order->items()->create([
+            $itemsData[] = [
                 'product_id' => $product->id,
                 'quantity' => $item['quantity'],
                 'price' => $product->price,
-            ]);
+            ];
+        }
 
-            // Kurangi stok
+        $order = Order::create([
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'total_price' => $total,
+        ]);
+
+        foreach ($itemsData as $item) {
+            $order->items()->create($item);
+
+            $product = Product::findOrFail($item['product_id']);
             $product->stock -= $item['quantity'];
             $product->save();
         }
-
-        $order->update(['total_price' => $total]);
 
         return response()->json([
             'message' => 'Checkout berhasil!',
             'order' => $order->load('items.product')
         ], 201);
-    }
-    
-    public function show(Order $order)
-    {
-        // Pastikan hanya pemilik order yang bisa melihat
-        if (auth()->user()->id !== $order->user_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        return $order->load('items.product');
     }
 }
