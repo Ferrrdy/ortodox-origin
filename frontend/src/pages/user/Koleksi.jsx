@@ -7,67 +7,82 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const Koleksi = () => {
   const [products, setProducts] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(null); // State untuk loading per tombol
   const { fetchCartCount } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Ambil data produk dari backend
   useEffect(() => {
     axios.get('http://127.0.0.1:8000/api/products')
       .then(res => setProducts(res.data))
       .catch(err => console.error('Gagal ambil produk:', err));
   }, []);
 
-  // Tambah ke keranjang
   const handleAddToCart = async (productId) => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-
+    setIsProcessing(productId); // Tampilkan loading
     try {
       await axios.get('http://localhost:8000/sanctum/csrf-cookie', { withCredentials: true });
-
       await axios.post('http://localhost:8000/api/cart', {
         product_id: productId,
         quantity: 1
       }, {
         withCredentials: true
       });
-
       await fetchCartCount();
       alert('Produk berhasil ditambahkan ke keranjang!');
     } catch (err) {
       console.error('Gagal menambahkan ke keranjang:', err.response?.data || err.message);
       alert('Gagal menambahkan ke keranjang.');
+    } finally {
+        setIsProcessing(null); // Hentikan loading
     }
   };
 
-  // Fungsi Beli Sekarang
+  /**
+   * ✨ FUNGSI DIPERBARUI DENGAN LOGIKA YANG BENAR ✨
+   * Langsung membuat order untuk 1 item dan navigasi ke halaman sukses.
+   */
   const handleBuyNow = async (productId) => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
-    try {
-      await axios.post('http://127.0.0.1:8000/api/cart', {
-        product_id: productId,
-        quantity: 1
-      }, {
-        withCredentials: true,
-        headers: {
-          Accept: 'application/json'
-        }
-      });
+    setIsProcessing(productId); // Tampilkan loading di tombol yang diklik
 
-      await fetchCartCount();
-      window.location.href = '/order';
-    } catch (err) {
-      console.error('Gagal saat beli sekarang:', err);
-      alert('Gagal memproses pembelian.');
+    // Siapkan data untuk API checkout, sama seperti di halaman keranjang
+    const checkoutData = {
+      items: [{
+        product_id: productId,
+        quantity: 1,
+      }],
+    };
+
+    try {
+      // 1. Langsung panggil API checkout
+      const response = await axios.post(
+        'http://localhost:8000/api/checkout',
+        checkoutData,
+        { withCredentials: true }
+      );
+
+      // 2. Jika berhasil, dapatkan ID pesanan dari respons
+      const orderId = response.data.order.id;
+
+      // 3. Navigasi ke halaman sukses DENGAN membawa ID pesanan
+      navigate(`/order-success/${orderId}`);
+
+    } catch (error) {
+      console.error('Gagal saat Beli Sekarang:', error.response?.data || error.message);
+      alert(`Pembelian Gagal: ${error.response?.data?.message || 'Terjadi kesalahan'}`);
+    } finally {
+      setIsProcessing(null); // Hentikan loading
     }
-  }
+  };
 
   return (
     <section className="min-h-screen px-6 py-12 bg-white text-gray-800">
@@ -110,7 +125,8 @@ const Koleksi = () => {
                   <div className="mt-3 flex flex-col gap-2">
                     <button
                       onClick={() => handleAddToCart(product.id)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 border rounded-2xl hover:bg-gray-200 transition"
+                      disabled={isProcessing === product.id}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 border rounded-2xl hover:bg-gray-200 transition disabled:opacity-50"
                       title="Tambah ke Keranjang"
                     >
                       <FiShoppingCart size={18} />
@@ -118,9 +134,10 @@ const Koleksi = () => {
 
                     <button
                       onClick={() => handleBuyNow(product.id)}
-                      className="w-full px-4 py-2 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition text-base"
+                      disabled={isProcessing === product.id}
+                      className="w-full px-4 py-2 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition text-base disabled:opacity-50 disabled:cursor-wait"
                     >
-                      Beli Sekarang
+                      {isProcessing === product.id ? 'Memproses...' : 'Beli Sekarang'}
                     </button>
                   </div>
                 </div>

@@ -36,7 +36,7 @@ const App = () => {
           }
         />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/order" element={<OrderSuccessPage />} />
+        <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

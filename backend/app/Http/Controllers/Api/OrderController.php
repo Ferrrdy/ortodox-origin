@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\OrderItem;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB; // Impor DB Facade
 
 class OrderController extends Controller
 {
+    /**
+     * Memproses checkout dari keranjang atau "Beli Sekarang".
+     */
     public function checkout(Request $request)
     {
         $user = auth()->user();
@@ -21,57 +23,80 @@ class OrderController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $total = 0;
-        $itemsData = [];
+        // Menggunakan transaksi database untuk memastikan semua operasi berhasil atau semua dibatalkan.
+        try {
+            $order = DB::transaction(function () use ($user, $validated) {
+                // 1. Buat pesanan baru
+                $order = Order::create([
+                    'user_id' => $user->id,
+                    'status' => 'pending',
+                    'total_price' => 0, // Dihitung di bawah
+                ]);
 
-        foreach ($validated['items'] as $item) {
-            $product = Product::find($item['product_id']);
+                $total = 0;
 
-            if (!$product || !$product->exists) {
-                return response()->json([
-                    'message' => "Produk dengan ID {$item['product_id']} tidak ditemukan.",
-                ], 404);
-            }
+                foreach ($validated['items'] as $item) {
+                    // Kunci produk untuk mencegah race condition saat update stok
+                    $product = Product::lockForUpdate()->find($item['product_id']);
 
-            if ($product->price === null || $product->price <= 0) {
-                return response()->json([
-                    'message' => "Produk '{$product->name}' tidak memiliki harga valid.",
-                ], 422);
-            }
+                    // Cek stok lagi untuk keamanan
+                    if ($product->stock < $item['quantity']) {
+                        // Melempar exception akan otomatis membatalkan (rollback) transaksi
+                        throw new \Exception("Stok produk '{$product->name}' tidak cukup.");
+                    }
 
-            if ($product->stock < $item['quantity']) {
-                return response()->json([
-                    'message' => "Stok produk '{$product->name}' tidak cukup.",
-                ], 422);
-            }
+                    $subtotal = $product->price * $item['quantity'];
+                    $total += $subtotal;
 
-            $subtotal = $product->price * $item['quantity'];
-            $total += $subtotal;
+                    // Buat item pesanan yang terhubung dengan pesanan utama
+                    $order->items()->create([
+                        'product_id' => $product->id,
+                        'quantity' => $item['quantity'],
+                        'price' => $product->price,
+                    ]);
 
-            $itemsData[] = [
-                'product_id' => $product->id,
-                'quantity' => $item['quantity'],
-                'price' => $product->price,
-            ];
+                    // Kurangi stok produk
+                    $product->decrement('stock', $item['quantity']);
+                }
+
+                // Update total harga pada pesanan
+                $order->update(['total_price' => $total]);
+                
+                return $order;
+            });
+
+            // Jika transaksi berhasil, kembalikan respons sukses
+            return response()->json([
+                'message' => 'Checkout berhasil!',
+                'order' => $order->load('items.product') // Muat relasi untuk dikirim ke frontend
+            ], 201);
+
+        } catch (\Exception $e) {
+            // Jika terjadi error di dalam transaksi, kembalikan pesan errornya
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+    
+    /**
+     * Menampilkan detail satu pesanan.
+     * Method ini tidak lagi menggunakan Route Model Binding otomatis untuk kontrol yang lebih baik.
+     */
+    public function show(Request $request, $id)
+    {
+        // 1. Cari pesanan berdasarkan ID yang diberikan di URL
+        $order = Order::find($id);
+
+        // 2. Jika pesanan tidak ada, beri pesan error yang jelas
+        if (!$order) {
+            return response()->json(['message' => "Pesanan dengan ID {$id} tidak ditemukan."], 404);
         }
 
-        $order = Order::create([
-            'user_id' => $user->id,
-            'status' => 'pending',
-            'total_price' => $total,
-        ]);
-
-        foreach ($itemsData as $item) {
-            $order->items()->create($item);
-
-            $product = Product::findOrFail($item['product_id']);
-            $product->stock -= $item['quantity'];
-            $product->save();
+        // 3. Pastikan hanya pemilik pesanan yang bisa melihatnya
+        if ($request->user()->id !== $order->user_id) {
+            return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
         }
 
-        return response()->json([
-            'message' => 'Checkout berhasil!',
-            'order' => $order->load('items.product')
-        ], 201);
+        // 4. Jika semua aman, kembalikan data pesanan beserta item-itemnya
+        return $order->load('items.product');
     }
 }
