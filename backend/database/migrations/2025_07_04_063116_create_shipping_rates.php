@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // migration: create_orders_table.php
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('shipping_rates', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->enum('status', ['pending', 'paid', 'cancelled'])->default('pending');
-            $table->integer('total_price')->default(0);
+            $table->unsignedBigInteger('destination_city_id');
+            $table->unsignedBigInteger('price_per_kg');
             $table->timestamps();
+
+            $table->foreign('destination_city_id')
+                ->references('id')->on('cities');
         });
     }
 
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('shiping_rates');
     }
 };

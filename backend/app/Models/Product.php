@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Category; // Pastikan ini ditambahkan untuk relasi kategori
 
 
+
 class Product extends Model
 {
     use HasFactory;
@@ -18,6 +19,7 @@ class Product extends Model
     'stock',
     'category_id',
     'image'
+    'weight', // Tambahkan ini
 ];
         public function category()
     {
