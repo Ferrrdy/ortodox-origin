@@ -12,7 +12,8 @@ class CategoryController extends Controller
     {
         return response()->json([
             'message' => 'Daftar kategori',
-            'data' => Category::with('products')->get()
+            'data' => Category::with('products')->orderBy('name', 'asc')->get()
+            
         ]);
     }
 

@@ -10,6 +10,16 @@ use Illuminate\Support\Facades\DB; // Impor DB Facade
 
 class OrderController extends Controller
 {
+    public function index(Request $request)
+    {
+        $orders = $request->user()
+            ->orders() // Asumsi ada relasi 'orders()' di model User
+            ->with('items.product') // Eager load item dan produknya jika perlu
+            ->latest() // Urutkan dari yang terbaru
+            ->get();
+
+        return response()->json($orders);
+    }
     /**
      * Memproses checkout dari keranjang atau "Beli Sekarang".
      */
@@ -99,4 +109,5 @@ class OrderController extends Controller
         // 4. Jika semua aman, kembalikan data pesanan beserta item-itemnya
         return $order->load('items.product');
     }
+
 }

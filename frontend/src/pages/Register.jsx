@@ -51,7 +51,7 @@ const Register = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-8 bg-white shadow-lg rounded-2xl my-10">
+    <div className="max-w-md mx-auto p-8 rounded-2xl py-30">
       <h2 className="text-3xl font-bold mb-6 text-center text-slate-800">Daftar Akun Baru</h2>
       {message && (
         <p className={`mb-4 text-sm text-center p-3 rounded-lg ${

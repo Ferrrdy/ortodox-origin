@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import AddProduct from './pages/admin/AddProduct';
 import AddCategory from './pages/admin/AddCategory';
 import EditProduct from './pages/admin/EditProduct';
+import AdminDashboard from './pages/admin/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Koleksi from './pages/user/Koleksi';
@@ -44,6 +45,7 @@ const App = () => {
         {/* Rute Admin */}
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
           <Route path="/admin/tambah" element={<AddProduct />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/aKoleksi" element={<KoleksiAdmin />} />
           <Route path="/admin/kategori" element={<AddCategory />} />
           <Route path="/admin/edit/:id" element={<EditProduct />} />

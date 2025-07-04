@@ -72,3 +72,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/orders', [OrderController::class, 'index']); // optional
     Route::get('/orders/{id}', [OrderController::class, 'show']);
 });
+
+Route::middleware(['auth:sanctum', 'is.admin'])->prefix('admin')->group(function () {
+    // Rute untuk Dasbor
+    Route::get('/stats', [DashboardController::class, 'getStats']);
+    Route::get('/orders/recent', [DashboardController::class, 'getRecentOrders']);
+    Route::get('/products/low-stock', [DashboardController::class, 'getLowStockProducts']);
+});
+
