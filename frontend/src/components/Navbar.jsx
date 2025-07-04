@@ -1,53 +1,77 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { FaShoppingCart, FaUserCircle } from 'react-icons/fa';
+import React from 'react';
+import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+// ✨ Ikon FiLogIn tidak lagi diperlukan
+import { FiShoppingCart, FiUser, FiGrid } from 'react-icons/fi';
 
 const Navbar = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { user, userRole } = useAuth();
   const { cartCount } = useCart();
 
+  const activeLinkClass = "text-indigo-600 font-semibold";
+  const defaultLinkClass = "text-slate-600 hover:text-indigo-600 transition-colors";
+
   return (
-    <nav className="flex justify-between items-center mb-6 relative px-4">
-      {/* Kiri: Logo */}
-      <h1 className="text-3xl font-bold text-slate-900">Ortodox</h1>
+    // ✨ Menambahkan styling agar navbar terlihat lebih modern
+    <header className="">
+      <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <Link to="/" className="text-2xl font-bold text-slate-800">
+              Ortodox
+            </Link>
+          </div>
 
-      {/* Tengah: Menu */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-x-6">
-        <Link to="/" className="text-lg font-medium text-gray-700 hover:text-blue-600">Home</Link>
-        <Link to="/user/koleksi" className="text-lg font-medium text-gray-700 hover:text-blue-600">Shop</Link>
-        <Link to="/" className="text-lg font-medium text-gray-700 hover:text-blue-600">About Us</Link>
-        <Link to="/" className="text-lg font-medium text-gray-700 hover:text-blue-600">Contact</Link>
-      </div>
+          {/* Navigasi Utama (Desktop) */}
+          <div className="hidden md:flex md:items-center md:space-x-8">
+            <NavLink to="/" className={({ isActive }) => isActive ? activeLinkClass : defaultLinkClass}>Home</NavLink>
+            <NavLink to="/user/koleksi" className={({ isActive }) => isActive ? activeLinkClass : defaultLinkClass}>Shop</NavLink>
+            
+            {userRole === 'admin' && (
+              <NavLink 
+                to="/admin/dashboard" 
+                className={({ isActive }) => `flex items-center gap-1 ${isActive ? activeLinkClass : defaultLinkClass}`}
+              >
+                <FiGrid size={16} />
+                Dashboard
+              </NavLink>
+            )}
+            
+            <NavLink to="/about" className={({ isActive }) => isActive ? activeLinkClass : defaultLinkClass}>About Us</NavLink>
+            <NavLink to="/contact" className={({ isActive }) => isActive ? activeLinkClass : defaultLinkClass}>Contact</NavLink>
+          </div>
 
-      {/* Kanan: Auth + Cart */}
-      <div className="flex items-center font-medium gap-x-6 text-slate-700">
-        {!isAuthenticated ? (
-          <>
-            <Link to="/login" className="hover:text-blue-600 cursor-pointer">Sign In</Link>
-            <Link to="/register" className="hover:text-blue-600 cursor-pointer">Sign Up</Link>
-          </>
-        ) : (
-          <>
-            {/* Icon Keranjang */}
-            <Link to="/cart" className="relative">
-              <FaShoppingCart className="text-2xl cursor-pointer" />
+          {/* Ikon Aksi (Kanan) */}
+          <div className="flex items-center gap-4">
+            <Link to="/cart" className="relative text-slate-600 hover:text-indigo-600 transition-colors">
+              <FiShoppingCart size={22} />
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
                   {cartCount}
                 </span>
               )}
             </Link>
 
-            {/* Icon Profil */}
-            <Link to="/profil" className="relative flex items-center gap-x-4">
-              <FaUserCircle className="text-2xl cursor-pointer" />
-              <span className="text-sm font-medium text-gray-700">{user?.name}</span>
+            <div className="w-px h-6 bg-slate-200" />
+
+            {/* --- ✨ LOGIKA PROFIL DIPERBARUI DI SINI ✨ --- */}
+            <Link 
+              // Jika user ada, arahkan ke /profil. Jika tidak, arahkan ke /login.
+              to={user ? "/profil" : "/login"} 
+              className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors"
+            >
+              <FiUser size={22} />
+              <span className="hidden sm:inline font-medium">
+                {/* Jika user ada, tampilkan nama. Jika tidak, tampilkan "Profil". */}
+                {user ? user.name : "Profil"}
+              </span>
             </Link>
-          </>
-        )}
-      </div>
-    </nav>
+          </div>
+        </div>
+      </nav>
+    </header>
   );
 };
 

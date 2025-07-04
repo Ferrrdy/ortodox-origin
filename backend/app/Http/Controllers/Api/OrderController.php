@@ -12,9 +12,7 @@ use App\Models\Address;
 
 class OrderController extends Controller
 {
-    /**
-     * Memproses checkout menggunakan ScraperService.
-     */
+
     public function index(Request $request)
     {
         $orders = $request->user()
@@ -128,73 +126,7 @@ class OrderController extends Controller
             return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
         }
 
-        return response()->json($order);
-    }
-    public function calculate(Request $request)
-    {
-        $user = auth()->user();
-
-        $validated = $request->validate([
-            'address_id' => 'required|exists:addresses,id',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-        ]);
-
-        try {
-            // Ambil alamat user
-            $address = \App\Models\Address::where('id', $validated['address_id'])
-                        ->where('user_id', $user->id)
-                        ->firstOrFail();
-
-            // Ambil produk
-            $productIds = collect($validated['items'])->pluck('product_id');
-            $products = \App\Models\Product::whereIn('id', $productIds)->get()->keyBy('id');
-
-            $totalWeight = 0;
-            $totalProductPrice = 0;
-
-            foreach ($validated['items'] as $item) {
-                $product = $products->get($item['product_id']);
-
-                if (!$product) {
-                    throw new \Exception("Produk dengan ID {$item['product_id']} tidak ditemukan.");
-                }
-
-                if ($product->stock < $item['quantity']) {
-                    throw new \Exception("Stok produk '{$product->name}' tidak cukup.");
-                }
-
-                $weight = $product->weight ?? 500; // default 500 gram jika tidak ada
-                $totalWeight += $weight * $item['quantity'];
-                $totalProductPrice += $product->price * $item['quantity'];
-            }
-
-            // Hitung berat dalam kg dan bulatkan ke atas
-            $totalWeightKg = ceil($totalWeight / 1000);
-
-            // Ambil ongkir dari tabel shipping_rates
-            $shippingRate = \App\Models\ShippingRate::where('destination_city_id', $address->city_id)->first();
-
-            if (!$shippingRate) {
-                throw new \Exception("Tarif ongkir ke kota tujuan tidak ditemukan.");
-            }
-
-            $shippingCost = $shippingRate->price_per_kg * $totalWeightKg;
-
-            $totalOrder = $totalProductPrice + $shippingCost;
-
-            return response()->json([
-                'destination_city' => $address->city, // atau tambahkan relasi ke City jika perlu
-        
-                'weight_gram' => $totalWeight,
-                'weight_kg' => $totalWeightKg,
-                'shipping_cost' => $shippingCost,
-                'total_product_price' => $totalProductPrice,
-                'total_price' => $totalOrder,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        // 4. Jika semua aman, kembalikan data pesanan beserta item-itemnya
+        return $order->load('items.product');
     }
 }

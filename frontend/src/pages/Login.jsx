@@ -62,7 +62,7 @@ const Login = () => {
 
   // --- Bagian Tampilan (JSX) tidak berubah ---
   return (
-    <div className="max-w-md mx-auto p-8 bg-white shadow-lg rounded-2xl my-10">
+    <div className="max-w-md mx-auto p-8 rounded-2xl py-50">
       <h2 className="text-3xl font-bold mb-6 text-center text-slate-800">Login</h2>
       {message && (
         <p className={`mb-4 text-sm text-center p-3 rounded-lg ${
