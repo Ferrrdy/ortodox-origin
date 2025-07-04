@@ -8,9 +8,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderItemController;
 use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\AddressController;
 use App\Http\Middleware\IsAdmin;
-use App\Http\Controllers\Api\OngkirController;
 
 
 
@@ -52,10 +50,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/categories', [CategoryController::class, 'store']);
     });
 });
+
 // 🔓 Public (semua bisa lihat)
 Route::get('/products',        [ProductController::class, 'index']);
 Route::get('/products/{id}',   [ProductController::class, 'show']);
 Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
@@ -66,43 +66,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/cart/clear-all', [CartController::class, 'clearAll']);
     Route::delete('/cart/item/{id}', [CartController::class, 'destroy']); 
 });
+
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/orders/checkout', [OrderController::class, 'checkout']);
+    Route::post('/checkout', [OrderController::class, 'checkout']);
     Route::get('/orders', [OrderController::class, 'index']); // optional
     Route::get('/orders/{id}', [OrderController::class, 'show']);
 });
-
-
-Route::middleware(['auth:sanctum', 'is.admin'])->prefix('admin')->group(function () {
-    // Rute untuk Dasbor
-    Route::get('/stats', [DashboardController::class, 'getStats']);
-    Route::get('/orders/recent', [DashboardController::class, 'getRecentOrders']);
-    Route::get('/products/low-stock', [DashboardController::class, 'getLowStockProducts']);
-});
-// alamat
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/addresses', [AddressController::class, 'index']);
-    Route::post('/addresses', [AddressController::class, 'store']);
-    Route::put('/addresses/{id}', [AddressController::class, 'update']);
-    Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
-    Route::get('/addresses/{id}', [AddressController::class, 'show']);
-});
-
-// Ongkir
-Route::prefix('ongkir')->group(function () {
-    Route::get('/provinces', [OngkirController::class, 'provinces']);
-    Route::get('/cities', [OngkirController::class, 'cities']);
-    Route::post('/cost', [OngkirController::class, 'cost']);
-});
-// Order Items
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/order-items', [OrderItemController::class, 'index']);
-    Route::get('/order-items/{id}', [OrderItemController::class, 'show']);
-    Route::post('/order-items', [OrderItemController::class, 'store']);
-    Route::put('/order-items/{id}', [OrderItemController::class, 'update']);
-    Route::delete('/order-items/{id}', [OrderItemController::class, 'destroy']);
-});
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/orders/calculate', [OrderController::class, 'calculate']);
-});
-

@@ -11,11 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cities', function (Blueprint $table) {
+        // migration: create_order_items_table.php
+        Schema::create('order_items', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->foreignId('order_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->integer('quantity');
+            $table->integer('price')->default(0);
             $table->timestamps();
         });
+
     }
 
     /**
@@ -23,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cities');
+        //
     }
 };

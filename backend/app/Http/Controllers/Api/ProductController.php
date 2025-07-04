@@ -27,10 +27,8 @@ public function store(Request $request)
         'description' => 'nullable|string',
         'price' => 'required|numeric',
         'stock' => 'nullable|integer',
-        'weight' => 'required|integer|min:1', // berat dalam gram
         'category_id' => 'required|exists:categories,id',
         'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        
     ]);
 
     // 💡 LOGIKA YANG PERLU DITAMBAHKAN

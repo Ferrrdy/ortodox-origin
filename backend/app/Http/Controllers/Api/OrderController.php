@@ -5,196 +5,98 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
-use App\Services\ScraperService; // Ganti dengan ScraperService
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Models\Address;
+use Illuminate\Support\Facades\DB; // Impor DB Facade
 
 class OrderController extends Controller
 {
     /**
-     * Memproses checkout menggunakan ScraperService.
+     * Memproses checkout dari keranjang atau "Beli Sekarang".
      */
-    public function index(Request $request)
-    {
-        $orders = $request->user()
-            ->orders() // Asumsi ada relasi 'orders()' di model User
-            ->with('items.product') // Eager load item dan produknya jika perlu
-            ->latest() // Urutkan dari yang terbaru
-            ->get();
-
-        return response()->json($orders);
-    }
-   public function checkout(Request $request)
+    public function checkout(Request $request)
     {
         $user = auth()->user();
 
         $validated = $request->validate([
-            'address_id' => 'required|exists:addresses,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
+        // Menggunakan transaksi database untuk memastikan semua operasi berhasil atau semua dibatalkan.
         try {
-            $order = DB::transaction(function () use ($validated, $user) {
-                // Ambil alamat
-                $address = Address::where('id', $validated['address_id'])
-                            ->where('user_id', $user->id)
-                            ->firstOrFail();
+            $order = DB::transaction(function () use ($user, $validated) {
+                // 1. Buat pesanan baru
+                $order = Order::create([
+                    'user_id' => $user->id,
+                    'status' => 'pending',
+                    'total_price' => 0, // Dihitung di bawah
+                ]);
 
-                // Ambil produk
-                $productIds = collect($validated['items'])->pluck('product_id');
-                $products = Product::whereIn('id', $productIds)->lockForUpdate()->get()->keyBy('id');
-
-                $totalWeight = 0;
-                $totalProductPrice = 0;
+                $total = 0;
 
                 foreach ($validated['items'] as $item) {
-                    $product = $products->get($item['product_id']);
-                    $quantity = $item['quantity'];
+                    // Kunci produk untuk mencegah race condition saat update stok
+                    $product = Product::lockForUpdate()->find($item['product_id']);
 
-                    if (!$product) {
-                        throw new \Exception("Produk dengan ID {$item['product_id']} tidak ditemukan.");
-                    }
-
-                    if ($product->stock < $quantity) {
+                    // Cek stok lagi untuk keamanan
+                    if ($product->stock < $item['quantity']) {
+                        // Melempar exception akan otomatis membatalkan (rollback) transaksi
                         throw new \Exception("Stok produk '{$product->name}' tidak cukup.");
                     }
 
-                    $weight = $product->weight ?? 500; // default 500 gram
-                    $totalWeight += $weight * $quantity;
-                    $totalProductPrice += $product->price * $quantity;
-                }
+                    $subtotal = $product->price * $item['quantity'];
+                    $total += $subtotal;
 
-                // Hitung berat dalam kg dan bulat ke atas
-                $totalWeightKg = ceil($totalWeight / 1000);
-
-                // Ambil ongkir dari shipping_rates
-                $shippingRate = \App\Models\ShippingRate::where('destination_city_id', $address->city_id)->first();
-                if (!$shippingRate) {
-                    throw new \Exception("Tarif pengiriman ke kota tujuan tidak tersedia.");
-                }
-
-                $shippingCost = $shippingRate->price_per_kg * $totalWeightKg;
-
-                // Simpan Order
-                $order = Order::create([
-                    'user_id' => $user->id,
-                    'address_id' => $address->id,
-                    'status' => 'pending',
-                    'shipping_service' => 'manual/local rate',
-                    'shipping_cost' => $shippingCost,
-                    'total_price' => $totalProductPrice + $shippingCost,
-                ]);
-
-                // Simpan item pesanan & kurangi stok
-                foreach ($validated['items'] as $item) {
-                    $product = $products->get($item['product_id']);
-
+                    // Buat item pesanan yang terhubung dengan pesanan utama
                     $order->items()->create([
                         'product_id' => $product->id,
                         'quantity' => $item['quantity'],
                         'price' => $product->price,
                     ]);
 
+                    // Kurangi stok produk
                     $product->decrement('stock', $item['quantity']);
                 }
 
+                // Update total harga pada pesanan
+                $order->update(['total_price' => $total]);
+                
                 return $order;
             });
 
+            // Jika transaksi berhasil, kembalikan respons sukses
             return response()->json([
                 'message' => 'Checkout berhasil!',
-                'order' => $order->load('items.product', 'address'),
+                'order' => $order->load('items.product') // Muat relasi untuk dikirim ke frontend
             ], 201);
 
         } catch (\Exception $e) {
+            // Jika terjadi error di dalam transaksi, kembalikan pesan errornya
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }
-
+    
+    /**
+     * Menampilkan detail satu pesanan.
+     * Method ini tidak lagi menggunakan Route Model Binding otomatis untuk kontrol yang lebih baik.
+     */
     public function show(Request $request, $id)
     {
-        $order = Order::with(['items.product', 'address.city', 'address.province'])
-                        ->where('id', $id)
-                        ->first();
+        // 1. Cari pesanan berdasarkan ID yang diberikan di URL
+        $order = Order::find($id);
 
+        // 2. Jika pesanan tidak ada, beri pesan error yang jelas
         if (!$order) {
             return response()->json(['message' => "Pesanan dengan ID {$id} tidak ditemukan."], 404);
         }
 
+        // 3. Pastikan hanya pemilik pesanan yang bisa melihatnya
         if ($request->user()->id !== $order->user_id) {
             return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
         }
 
-        return response()->json($order);
-    }
-    public function calculate(Request $request)
-    {
-        $user = auth()->user();
-
-        $validated = $request->validate([
-            'address_id' => 'required|exists:addresses,id',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-        ]);
-
-        try {
-            // Ambil alamat user
-            $address = \App\Models\Address::where('id', $validated['address_id'])
-                        ->where('user_id', $user->id)
-                        ->firstOrFail();
-
-            // Ambil produk
-            $productIds = collect($validated['items'])->pluck('product_id');
-            $products = \App\Models\Product::whereIn('id', $productIds)->get()->keyBy('id');
-
-            $totalWeight = 0;
-            $totalProductPrice = 0;
-
-            foreach ($validated['items'] as $item) {
-                $product = $products->get($item['product_id']);
-
-                if (!$product) {
-                    throw new \Exception("Produk dengan ID {$item['product_id']} tidak ditemukan.");
-                }
-
-                if ($product->stock < $item['quantity']) {
-                    throw new \Exception("Stok produk '{$product->name}' tidak cukup.");
-                }
-
-                $weight = $product->weight ?? 500; // default 500 gram jika tidak ada
-                $totalWeight += $weight * $item['quantity'];
-                $totalProductPrice += $product->price * $item['quantity'];
-            }
-
-            // Hitung berat dalam kg dan bulatkan ke atas
-            $totalWeightKg = ceil($totalWeight / 1000);
-
-            // Ambil ongkir dari tabel shipping_rates
-            $shippingRate = \App\Models\ShippingRate::where('destination_city_id', $address->city_id)->first();
-
-            if (!$shippingRate) {
-                throw new \Exception("Tarif ongkir ke kota tujuan tidak ditemukan.");
-            }
-
-            $shippingCost = $shippingRate->price_per_kg * $totalWeightKg;
-
-            $totalOrder = $totalProductPrice + $shippingCost;
-
-            return response()->json([
-                'destination_city' => $address->city, // atau tambahkan relasi ke City jika perlu
-        
-                'weight_gram' => $totalWeight,
-                'weight_kg' => $totalWeightKg,
-                'shipping_cost' => $shippingCost,
-                'total_product_price' => $totalProductPrice,
-                'total_price' => $totalOrder,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        // 4. Jika semua aman, kembalikan data pesanan beserta item-itemnya
+        return $order->load('items.product');
     }
 }
