@@ -11,7 +11,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Controllers\Api\OngkirController;
-
+use App\Http\Controllers\Api\VoucherController;
 
 
 
@@ -112,4 +112,9 @@ Route::middleware(['auth:sanctum', 'is.admin'])->prefix('admin')->group(function
     Route::get('/products/low-stock', [DashboardController::class, 'getLowStockProducts']);
 });
 
-
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/ongkir/check', [OngkirController::class, 'check']);
+    Route::post('/checkout', [OrderController::class, 'checkout']);
+    // ... rute lain yang butuh otentikasi ...
+    Route::post('/vouchers/check', [VoucherController::class, 'check'])->middleware('auth:sanctum');
+});

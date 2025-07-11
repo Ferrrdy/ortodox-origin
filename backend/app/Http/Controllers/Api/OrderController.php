@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
-use App\Services\ScraperService; // Ganti dengan ScraperService
+use App\Services\OngkirManualService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Address;
+use App\Models\Voucher;
 
 class OrderController extends Controller
 {
@@ -16,102 +17,101 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $orders = $request->user()
-            ->orders() // Asumsi ada relasi 'orders()' di model User
-            ->with('items.product') // Eager load item dan produknya jika perlu
-            ->latest() // Urutkan dari yang terbaru
+            ->orders() 
+            ->with('items.product') 
+            ->latest()
             ->get();
 
         return response()->json($orders);
     }
-   public function checkout(Request $request)
+    public function checkout(Request $request, OngkirManualService $ongkirService)
     {
         $user = auth()->user();
 
         $validated = $request->validate([
-            'address_id' => 'required|exists:addresses,id',
-            'items' => 'required|array|min:1',
+            'address_id'       => 'required|exists:addresses,id,user_id,'.$user->id,
+            'items'            => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity'   => 'required|integer|min:1',
+            'shipping_service' => 'required|string',
+            'shipping_cost'    => 'required|integer|min:0',
+            'voucher_code'     => 'nullable|string|exists:vouchers,code',
         ]);
-
         try {
-            $order = DB::transaction(function () use ($validated, $user) {
-                // Ambil alamat
-                $address = Address::where('id', $validated['address_id'])
-                            ->where('user_id', $user->id)
-                            ->firstOrFail();
-
-                // Ambil produk
+            $order = DB::transaction(function () use ($user, $validated, $ongkirService) {
+                $address = Address::findOrFail($validated['address_id']);
                 $productIds = collect($validated['items'])->pluck('product_id');
                 $products = Product::whereIn('id', $productIds)->lockForUpdate()->get()->keyBy('id');
 
+                $itemsTotalPrice = 0;
                 $totalWeight = 0;
-                $totalProductPrice = 0;
-
                 foreach ($validated['items'] as $item) {
                     $product = $products->get($item['product_id']);
-                    $quantity = $item['quantity'];
-
-                    if (!$product) {
-                        throw new \Exception("Produk dengan ID {$item['product_id']} tidak ditemukan.");
-                    }
-
-                    if ($product->stock < $quantity) {
+                    if ($product->stock < $item['quantity']) {
                         throw new \Exception("Stok produk '{$product->name}' tidak cukup.");
                     }
-
-                    $weight = $product->weight ?? 500; // default 500 gram
-                    $totalWeight += $weight * $quantity;
-                    $totalProductPrice += $product->price * $quantity;
+                    $itemsTotalPrice += $product->price * $item['quantity'];
+                    $totalWeight += ($product->weight ?? 1000) * $item['quantity'];
                 }
 
-                // Hitung berat dalam kg dan bulat ke atas
-                $totalWeightKg = ceil($totalWeight / 1000);
-
-                // Ambil ongkir dari shipping_rates
-                $shippingRate = \App\Models\ShippingRate::where('destination_city_id', $address->city_id)->first();
-                if (!$shippingRate) {
-                    throw new \Exception("Tarif pengiriman ke kota tujuan tidak tersedia.");
+                $verifiedShipping = $ongkirService->calculate($address->city_id, $totalWeight);
+                if ($verifiedShipping['cost'] != $validated['shipping_cost']) {
+                    throw new \Exception('Biaya ongkir tidak valid.');
                 }
 
-                $shippingCost = $shippingRate->price_per_kg * $totalWeightKg;
+                $discount = 0;
+                $voucherId = null;
 
-                // Simpan Order
+                // Hitung diskon jika ada voucher
+                if (!empty($validated['voucher_code'])) {
+                    $voucher = Voucher::where('code', $validated['voucher_code'])->first();
+                    
+                    if ($voucher && (!$voucher->expires_at || !$voucher->expires_at->isPast())) {
+                        if ($voucher->type === 'fixed') {
+                            $discount = $voucher->amount;
+                        } elseif ($voucher->type === 'percent') {
+                            $discount = ($voucher->amount / 100) * $itemsTotalPrice;
+                        }
+                        $voucherId = $voucher->id;
+                    } else {
+                        throw new \Exception('Voucher yang digunakan tidak valid.');
+                    }
+                }
+
+                $discount = min($discount, $itemsTotalPrice);
+
+                $grandTotal = $itemsTotalPrice + $validated['shipping_cost'] - $discount;
                 $order = Order::create([
-                    'user_id' => $user->id,
-                    'address_id' => $address->id,
-                    'status' => 'pending',
-                    'shipping_service' => 'manual/local rate',
-                    'shipping_cost' => $shippingCost,
-                    'total_price' => $totalProductPrice + $shippingCost,
+                    'user_id'          => $user->id,
+                    'address_id'       => $validated['address_id'],
+                    'status'           => 'pending',
+                    'shipping_service' => $validated['shipping_service'],
+                    'shipping_cost'    => $validated['shipping_cost'],
+                    'voucher_id'       => $voucherId,
+                    'total_price'      => $grandTotal,
                 ]);
 
-                // Simpan item pesanan & kurangi stok
                 foreach ($validated['items'] as $item) {
                     $product = $products->get($item['product_id']);
-
                     $order->items()->create([
                         'product_id' => $product->id,
-                        'quantity' => $item['quantity'],
-                        'price' => $product->price,
+                        'quantity'   => $item['quantity'],
+                        'price'      => $product->price,
                     ]);
-
                     $product->decrement('stock', $item['quantity']);
                 }
 
                 return $order;
             });
-
+            $freshOrder = Order::with('items.product', 'address', 'voucher')->find($order->id);
             return response()->json([
                 'message' => 'Checkout berhasil!',
-                'order' => $order->load('items.product', 'address'),
+                'order' => $freshOrder,
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }
-
     public function show(Request $request, $id)
     {
         $order = Order::with(['items.product', 'address.city', 'address.province'])
@@ -125,8 +125,6 @@ class OrderController extends Controller
         if ($request->user()->id !== $order->user_id) {
             return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
         }
-
-        // 4. Jika semua aman, kembalikan data pesanan beserta item-itemnya
         return $order->load('items.product');
     }
 }

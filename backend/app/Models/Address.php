@@ -32,6 +32,11 @@ class Address extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }   
+    public function city()
+    {
+        // Pastikan Anda memiliki model City
+        return $this->belongsTo(City::class);
     }
 
 }

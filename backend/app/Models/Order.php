@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\OrderItem;
 use App\Models\User;
 use App\Models\Address;
+use App\Models\Voucher;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -39,6 +40,9 @@ class Order extends Model
     public function address()
     {
         return $this->belongsTo(Address::class);
+    }
+    public function voucher(){
+        return $this->belongsTo(Voucher::class);
     }
 
 }

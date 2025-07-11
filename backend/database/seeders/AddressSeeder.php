@@ -23,11 +23,13 @@ class AddressSeeder extends Seeder
             'label' => 'Rumah',
             'receiver_name' => 'Budi Santoso',
             'phone' => '081234567890',
-            'province' => 'Jawa Tengah',
-            'city' => 'Semarang',
-            'city_id' => '501',
-            'district' => 'Tembalang',
-            'postal_code' => '50275',
+            'province_id'    => 10, 
+            'province_name'  => 'Jawa Tengah',
+            'city_id'        => 501,
+            'city_name'      => 'Semarang',
+            'district_id'    => 5573, 
+            'district_name'  => 'Tembalang',
+            'postal_code'    => '50275',
             'address_detail' => 'Jl. Melati No. 123 RT 01 RW 03, Tembalang',
         ]);
     }
