@@ -8,4 +8,10 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+    host: true, // Memungkinkan akses dari alamat IP jaringan
+    allowedHosts: [
+        '39f64ba9f40d.ngrok-free.app' 
+        ],
+    },
 });

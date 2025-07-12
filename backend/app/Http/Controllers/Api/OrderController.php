@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Address;
 use App\Models\Voucher;
+use App\Services\MidtransService; 
 
 class OrderController extends Controller
 {
@@ -126,5 +127,24 @@ class OrderController extends Controller
             return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
         }
         return $order->load('items.product');
+    }
+    public function createPayment(Request $request, Order $order, MidtransService $midtransService)
+    {
+        // Pastikan hanya pemilik order yang bisa membayar
+        if ($request->user()->id !== $order->user_id) {
+            return response()->json(['message' => 'Akses ditolak.'], 403);
+        }
+
+        // Pastikan hanya order 'pending' yang bisa dibayar
+        if ($order->status !== 'pending') {
+            return response()->json(['message' => 'Pesanan ini tidak bisa dibayar.'], 422);
+        }
+        
+        // Muat relasi yang dibutuhkan oleh MidtransService
+        $order->load('user', 'address');
+
+        $snapToken = $midtransService->createTransaction($order);
+
+        return response()->json(['snap_token' => $snapToken]);
     }
 }
